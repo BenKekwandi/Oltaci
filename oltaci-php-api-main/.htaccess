@@ -1,0 +1,19 @@
+<IfModule mod_headers.c>
+    # Enable CORS for specific origins
+    SetEnvIf Origin "http(s)?://(www\.)?(localhost:5173|172\.18\.0\.50:5173|oltaci\.com\.tr|admin\.oltaci\.com\.tr)$" AccessControlAllowOrigin=$0
+
+    Header add Access-Control-Allow-Origin %{AccessControlAllowOrigin}e env=AccessControlAllowOrigin
+    Header add Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header add Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+    Header add Access-Control-Allow-Credentials true
+
+    # Handle preflight requests
+    RewriteEngine On
+    RewriteCond %{REQUEST_METHOD} OPTIONS
+    RewriteRule ^(.*)$ $1 [R=200,L]
+</IfModule>
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_METHOD} OPTIONS
+    RewriteRule ^(.*)$ $1 [R=200,L]
+</IfModule>

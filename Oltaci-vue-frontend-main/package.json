@@ -1,0 +1,41 @@
+{
+  "name": "oltaci-vue-frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fortawesome/free-solid-svg-icons": "^6.5.2",
+    "@fortawesome/vue-fontawesome": "^3.0.8",
+    "@unhead/vue": "^1.9.16",
+    "@vuelidate/core": "^2.0.3",
+    "@vuelidate/validators": "^2.0.4",
+    "@vuepic/vue-datepicker": "^8.8.1",
+    "@vueuse/core": "^10.11.0",
+    "axios": "^1.7.2",
+    "chart.js": "^4.4.3",
+    "date-fns": "^3.6.0",
+    "pinia": "^2.1.7",
+    "pinia-plugin-persistedstate": "^3.2.1",
+    "vue": "^3.4.21",
+    "vue-chartjs": "^5.3.1",
+    "vue-faq-accordion": "^1.6.2",
+    "vue-i18n": "^9.13.1",
+    "vue-recaptcha": "^3.0.0-alpha.6",
+    "vue-recaptcha-v3": "^2.0.1",
+    "vue-router": "^4.4.0",
+    "vue3-google-map": "^0.20.0",
+    "vuetify": "^3.6.9"
+  },
+  "devDependencies": {
+    "@fortawesome/fontawesome-free": "^6.5.2",
+    "@mdi/font": "^7.4.47",
+    "@vitejs/plugin-vue": "^5.0.4",
+    "sass": "^1.77.7",
+    "vite": "^5.2.0"
+  }
+}

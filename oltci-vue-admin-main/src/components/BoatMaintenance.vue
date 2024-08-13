@@ -1,0 +1,277 @@
+<template>
+  <v-card color="grey-lighten-5">
+    <v-card-title class="d-flex justify-space-between align-center pa-5">
+      <div>{{ $t('Boat Maintenance') }}</div>
+      <v-dialog max-width="500" v-model="dialogAddBoatMaintenance">
+        <template v-slot:activator="{ props }">
+          <v-btn
+            prepend-icon="fa-plus"
+            color="orange-darken-4"
+            variant="outlined"
+            v-bind="props"
+            >{{ $t('Boat Maintenance') }}</v-btn
+          >
+        </template>
+
+        <v-card :title="formTitle">
+          <v-card-text class="mt-4">
+            <v-autocomplete
+              :label="$t('Boat')"
+              v-model="boat"
+              item-title="name"
+              item-value="id"
+              :items="boatStore.boats"
+              @update:modelValue="getBoatId"
+              variant="outlined"
+              density="comfortable"
+            ></v-autocomplete>
+
+            <v-text-field
+              v-model="description"
+              :label="$t('Description')"
+              variant="outlined"
+              density="comfortable"
+            ></v-text-field>
+
+            <v-text-field
+              v-model="cost"
+              :label="$t('Cost')"
+              variant="outlined"
+              density="comfortable"
+            ></v-text-field>
+
+            <v-text-field
+              prefix="$"
+              v-model="inspector"
+              :label="$t('Inspector')"
+              variant="outlined"
+              density="comfortable"
+            ></v-text-field>
+
+            <v-text-field
+              prefix="$"
+              v-model="maintenance_datetime"
+              :label="$t('Maintenance Date')"
+              variant="outlined"
+              density="comfortable"
+            ></v-text-field>
+
+            <br />
+            <div class="d-flex justify-end">
+              <v-btn
+                :text="$t('Save')"
+                variant="text"
+                color="orange-darken-4"
+                @click="save"
+                :loading="loading"
+              ></v-btn>
+              <v-btn text="Close" variant="text" @click="closeAddBoatMaintenance"></v-btn>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-dialog>
+    </v-card-title>
+    <v-card-text>
+      <v-row>
+        <v-col cols="12" md="4" sm="4">
+          <v-text-field
+            v-model="search"
+            :label="$t('Search')"
+            prepend-inner-icon="mdi-magnify"
+            variant="outlined"
+            hide-details
+            single-line
+            density="compact"
+          ></v-text-field>
+        </v-col>
+      </v-row>
+    </v-card-text>
+
+    <v-data-table
+      :headers="headers"
+      :items="boatMaintenances"
+      :search="search"
+      class="bg-grey-lighten-5"
+      :mobile="sm || xs"
+      :loading="loading"
+      :sort-by="[{ key: 'id', order: 'desc' }]"
+    >
+      <template v-slot:item.actions="{ item }">
+        <v-btn
+          size="x-small"
+          class="me-2"
+          variant="tonal"
+          icon="mdi-pencil"
+          @click="editBoatMaintenance(item)"
+        ></v-btn>
+        <v-btn
+          size="x-small"
+          color="red-darken-4"
+          variant="tonal"
+          icon="mdi-trash-can"
+          @click="deleteBoatMaintenance(item.id)"
+        ></v-btn>
+      </template>
+    </v-data-table>
+  </v-card>
+
+  <DialogDelete
+    v-model="dialogDelete"
+    @confirm="deleteBoatMaintenanceConfirm"
+    @close="closeDeleteBoatMaintenance"
+    entity="boatMaintenance"
+    :loading="loading"
+  />
+</template>
+
+<script setup>
+  import { ref, computed, watch, onMounted } from "vue";
+  import { useBoatMaintenanceStore } from "../stores/boat-maintenance";
+  import { useBoatStore } from "../stores/boats";
+  import { useSnackbarStore } from "../stores/snackbar";
+  import { useDisplay } from "vuetify";
+  import { storeToRefs } from "pinia";
+  import DialogDelete from "../components/base/DeleteDialog.vue";
+  
+  import { useI18n } from "vue-i18n";
+  
+  const { t } = useI18n();
+  
+  const { xs, sm } = useDisplay();
+  
+  const store = useBoatMaintenanceStore();
+  const boatStore = useBoatStore();
+  
+  const { boatMaintenances, loading, response } = storeToRefs(store);
+  
+  const search = ref("");
+  
+  const headers = [
+    {
+      align: "start",
+      key: "id",
+      title: "ID",
+    },
+    { key: "boat.name", title: t('Boat') },
+    { key: "description", title: t('Description') },
+    { key: "cost", title: t('Cost') },
+    { key: "currency", title: t('Currency') },
+    { key: "inspector", title: t('Inspector') },
+    { key: "maintenance_datetime", title: t('Maintenance Date') },
+    { key: "actions", title: t('Actions'), align: "end", sortable: false, width:"10%" },
+  ];
+  
+  const dialogAddBoatMaintenance = ref(false);
+  const dialogDelete = ref(false);
+  const editedIndex = ref(-1);
+  
+  const formTitle = computed(() => {
+    return editedIndex.value === -1 ? t('Add Maintenance Record') : t('Edit Maintenance Record');
+  });
+  
+  const boatMaintenance = ref({
+    boat_id: "",
+    description: "",
+    cost: "",
+    inspector: "",
+    maintenance_datetime: "",
+  });
+  
+  const defaultBoatMaintenance = {
+    boat_id: "",
+    description: "",
+    cost: "",
+    inspector: "",
+    maintenance_datetime: "",
+  };
+  
+  const boat = ref("");
+  
+  const editBoatMaintenance = (item) => {
+    dialogAddBoatMaintenance.value = true;
+    editedIndex.value = boatMaintenances.value.indexOf(item);
+    boatMaintenance.value.id = item.id;
+    boatMaintenance.value.boat_id = item.boat.id;
+    boatMaintenance.value.description = item.description;
+    boatMaintenance.value.cost = item.cost;
+    boatMaintenance.value.inspector = item.inspector;
+    boatMaintenance.value.maintenance_datetime = item.maintenance_datetime
+    boat.value = Object.assign({}, item.boat);
+  };
+  
+  const getBoatId = (val) => {
+    boatMaintenance.value.boat_id = val;
+  };
+  
+  
+  const deleteBoatMaintenance = (id) => {
+    boatMaintenance.value.id = id;
+    dialogDelete.value = true;
+  };
+  
+  async function initialize() {
+    await store.fetchBoatMaintenances();
+  }
+  
+  onMounted(async () => {
+    await boatStore.fetchBoats();
+  });
+  
+  const save = async () => {
+    if (editedIndex.value > -1) {
+      await store.handleUpdatedBoatMaintenance(boatMaintenance.value, boatMaintenance.value.id);
+      if (response.value.status === 200 || response.value.status === 204) {
+        initialize();
+        closeAddBoatMaintenance();
+        snackbarShow("Data has been updated successfully", "success");
+      } else {
+        snackbarShow("Unable to update data. Please try again.", "error");
+      }
+    } else {
+      await store.handleAddedBoatMaintenance(boatMaintenance.value);
+      if (response.value.status === 200 || response.value.status === 201) {
+        initialize();
+        closeAddBoatMaintenance();
+        snackbarShow("Data has been added successfully", "success");
+      } else {
+        snackbarShow("Unable to create data. Please try again.", "error");
+      }
+    }
+    response.value = null;
+  };
+  
+  const deleteBoatMaintenanceConfirm = async () => {
+    await store.handleDeletedBoatMaintenance(boatMaintenance.value.id);
+    if (response.value.status === 204) {
+      initialize();
+      closeDeleteBoatMaintenance();
+      snackbarShow("Data has been removed successfully", "success");
+    } else {
+      snackbarShow("Unable to remove data. Please try again.", "error");
+    }
+  };
+  
+  const closeDeleteBoatMaintenance = () => {
+    dialogDelete.value = false;
+    boatMaintenance.value = Object.assign({}, defaultBoatMaintenance);
+  };
+  
+  const closeAddBoatMaintenance = async () => {
+    dialogAddBoatMaintenance.value = false;
+    setTimeout(() => {
+      boatMaintenance.value = Object.assign({}, defaultBoatMaintenance);
+      boat.value = "";
+      editedIndex.value = -1;
+    }, 250);
+  };
+  
+  const snackbarShow = (message, type) => {
+    useSnackbarStore().showSnackbar(message, type);
+  };
+  
+  watch(dialogAddBoatMaintenance, (val) => {
+    val || closeAddBoatMaintenance();
+  });
+  
+  initialize();
+</script>
